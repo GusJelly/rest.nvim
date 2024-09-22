@@ -153,11 +153,18 @@ function parser.parse_body(content_type, body_node, source, context)
         if variables_node then
             variables_text = vim.treesitter.get_node_text(variables_node, source)
             variables_text = expand_variables(variables_text, context)
+            body.data = vim.json.encode({
+                query = query_text,
+                variables = vim.json.decode(variables_text),
+            })
+        else
+            -- hacky way to remove the extra "query" that should not be in the
+            -- string
+            query_text = query_text:gsub("query", "", 1)
+            body.data = vim.json.encode({
+                query = query_text
+            })
         end
-        body.data = vim.json.encode({
-            query = query_text,
-            variables = vim.json.decode(variables_text),
-        })
         logger.debug(body.data)
     elseif node_type == "json_body" or content_type == "application/json" then
         body.__TYPE = "json"
